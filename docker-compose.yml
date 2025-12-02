@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redistool-test-redis
+    ports:
+      - "16379:6379"
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  kvrocks:
+    image: apache/kvrocks:latest
+    container_name: redistool-test-kvrocks
+    ports:
+      - "16380:6666"
+    command: kvrocks -c /etc/kvrocks/kvrocks.conf --dir /var/lib/kvrocks --bind 0.0.0.0
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6666", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
