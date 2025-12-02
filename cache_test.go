@@ -287,7 +287,7 @@ func TestCache_ClearExpired(t *testing.T) {
 	}, tr.Redis)
 
 	s1 := TestStruct{Name: "Alice", Age: 30}
-	
+
 	// Set with very short expire
 	cache.Set("key1", s1, time.Millisecond*100)
 	// Set with long expire
@@ -322,7 +322,7 @@ func TestCache_Expiration(t *testing.T) {
 	}, tr.Redis)
 
 	s1 := TestStruct{Name: "Alice", Age: 30}
-	
+
 	// Set with very short expire
 	cache.Set("key1", s1, time.Millisecond*100)
 
@@ -355,10 +355,10 @@ func TestCache_StartAutoCleanup(t *testing.T) {
 	}, tr.Redis)
 
 	s1 := TestStruct{Name: "Alice", Age: 30}
-	
+
 	// Set with very short expire
 	cache.Set("key1", s1, time.Millisecond*100)
-	
+
 	// Start auto cleanup with short interval
 	cache.StartAutoCleanup(time.Millisecond * 50)
 
@@ -383,7 +383,7 @@ func TestCache_NoExpire(t *testing.T) {
 	}, tr.Redis)
 
 	s1 := TestStruct{Name: "Alice", Age: 30}
-	
+
 	// Set without expire
 	cache.Set("key1", s1, 0)
 
@@ -393,7 +393,7 @@ func TestCache_NoExpire(t *testing.T) {
 	}
 
 	// Fast forward time
-	tr.FastForward(3600) // 1 hour
+	tr.FastForward(10) // 10 sec
 
 	// Should still exist
 	value, ok := cache.Get("key1")

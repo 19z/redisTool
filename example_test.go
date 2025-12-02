@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"adFastPro/backend/internal/utils/redisTool"
+	"github.com/19z/redisTool"
 )
 
 // Student 示例结构体
