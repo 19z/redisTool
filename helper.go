@@ -10,20 +10,32 @@ import (
 func (r *Redis) LastUseTime(key string, update bool) time.Time {
 	safeTypeMapName := r.CreateName(RedisTypeSafeTypeMap_, r.config.SafeTypeMapName)
 	
-	// 获取上次时间
-	lastTimeMs, err := redis.Int64(r.Do("HGET", safeTypeMapName, key))
-	var lastTime time.Time
-	if err == nil && lastTimeMs > 0 {
-		lastTime = time.UnixMilli(lastTimeMs)
-	}
-	
-	// 如果需要更新
 	if update {
+		// 使用 Lua 脚本确保原子性：获取旧值并设置新值
+		script := `
+			local old_value = redis.call('HGET', KEYS[1], ARGV[1])
+			redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
+			return old_value
+		`
 		now := time.Now()
-		r.Do("HSET", safeTypeMapName, key, now.UnixMilli())
+		result, err := r.Do("EVAL", script, 1, safeTypeMapName, key, now.UnixMilli())
+		
+		var lastTime time.Time
+		if err == nil && result != nil {
+			if lastTimeMs, err := redis.Int64(result, nil); err == nil && lastTimeMs > 0 {
+				lastTime = time.UnixMilli(lastTimeMs)
+			}
+		}
+		return lastTime
+	} else {
+		// 只读取，不需要原子性
+		lastTimeMs, err := redis.Int64(r.Do("HGET", safeTypeMapName, key))
+		var lastTime time.Time
+		if err == nil && lastTimeMs > 0 {
+			lastTime = time.UnixMilli(lastTimeMs)
+		}
+		return lastTime
 	}
-	
-	return lastTime
 }
 
 // AcrossMinute 是否跨越了分钟

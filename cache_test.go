@@ -346,34 +346,6 @@ func TestCache_Expiration(t *testing.T) {
 	}
 }
 
-func TestCache_StartAutoCleanup(t *testing.T) {
-	tr := NewTestRedis(t)
-	defer tr.Close()
-
-	cache := NewCache[TestStruct]("testcache", CacheConfig{
-		DefaultExpire: time.Minute * 10,
-	}, tr.Redis)
-
-	s1 := TestStruct{Name: "Alice", Age: 30}
-
-	// Set with very short expire
-	cache.Set("key1", s1, time.Millisecond*100)
-
-	// Start auto cleanup with short interval
-	cache.StartAutoCleanup(time.Millisecond * 50)
-
-	// Fast forward time
-	tr.FastForward(1)
-
-	// Wait a bit for cleanup to run
-	time.Sleep(time.Millisecond * 200)
-
-	// key1 should be gone
-	if cache.Exists("key1") {
-		t.Error("key1 should not exist after auto cleanup")
-	}
-}
-
 func TestCache_NoExpire(t *testing.T) {
 	tr := NewTestRedis(t)
 	defer tr.Close()

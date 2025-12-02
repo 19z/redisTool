@@ -185,8 +185,8 @@ student := cache.GetOrSet("student2", func(key string) (Student, time.Duration) 
     return Student{Name: "李四", Age: 20}, time.Minute * 5
 })
 
-// 启动自动清理
-cache.StartAutoCleanup(time.Minute)
+// 注意：缓存会在 Set 操作时自动清理过期数据
+// 使用概率性机制，在横跨分钟时触发清理，无需手动调用
 ```
 
 ### 8. 使用分布式锁

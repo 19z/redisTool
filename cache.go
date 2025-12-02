@@ -1,6 +1,7 @@
 package redisTool
 
 import (
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -41,6 +42,15 @@ func (c *Cache[T]) Set(key string, value T, expire time.Duration) error {
 		expireTime := float64(time.Now().Add(c.config.DefaultExpire).UnixMilli())
 		if _, err := conn.Do("ZADD", c.expireName, expireTime, key); err != nil {
 			return err
+		}
+	}
+	
+	// 概率性清理过期数据（10% 概率）
+	if rand.Intn(10) == 0 {
+		// 使用 AcrossMinute 判断是否横跨分钟
+		cleanupKey := c.dataName + ":cleanup"
+		if c.redis.AcrossMinute(cleanupKey) {
+			go c.ClearExpired()
 		}
 	}
 	
@@ -215,14 +225,3 @@ func (c *Cache[T]) isExpired(key string) bool {
 	return time.Now().After(expireTime)
 }
 
-// StartAutoCleanup 启动自动清理过期缓存
-func (c *Cache[T]) StartAutoCleanup(interval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		
-		for range ticker.C {
-			c.ClearExpired()
-		}
-	}()
-}
