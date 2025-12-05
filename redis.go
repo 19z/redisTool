@@ -2,6 +2,7 @@ package redisTool
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -63,7 +64,7 @@ func (b *RedisBuilder) Config(config Config) *RedisBuilder {
 	if config.SafeTypeMapName == "" {
 		config.SafeTypeMapName = b.config.SafeTypeMapName
 	}
-	
+
 	b.config = config
 	return b
 }
@@ -71,9 +72,9 @@ func (b *RedisBuilder) Config(config Config) *RedisBuilder {
 // Build 构建 Redis 客户端
 func (b *RedisBuilder) Build() *Redis {
 	pool := &redis.Pool{
-		MaxIdle:     b.config.MaxIdle,
-		MaxActive:   b.config.MaxActive,
-		IdleTimeout: b.config.IdleTimeout,
+		MaxIdle:         b.config.MaxIdle,
+		MaxActive:       b.config.MaxActive,
+		IdleTimeout:     b.config.IdleTimeout,
 		MaxConnLifetime: b.config.MaxLifeTime,
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", b.addr)
@@ -97,10 +98,20 @@ func (b *RedisBuilder) Build() *Redis {
 		},
 	}
 
-	return &Redis{
+	r := &Redis{
 		pool:   pool,
 		config: b.config,
 	}
+
+	// 测试 Redis 连接是否可用
+	conn := r.GetConn()
+	defer conn.Close()
+
+	if _, err := conn.Do("PING"); err != nil {
+		panic(fmt.Sprintf("Redis connection test failed: %v (addr: %s)", err, b.addr))
+	}
+
+	return r
 }
 
 // GetConn 获取连接
